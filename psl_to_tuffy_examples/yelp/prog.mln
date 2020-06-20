@@ -1,0 +1,68 @@
+// Closed predicates
+*user(user)
+*item(item)
+*users_are_friends(user, user)
+*sim_content_items_jaccard(item, item)
+*sim_pearson_items(item, item)
+*sim_cosine_items(item, item)
+*sim_adjcos_items(item, item)
+*sim_pearson_users(user, user)
+*sim_cosine_users(user, user)
+*sim_mf_cosine_users(user, user)
+*sim_mf_euclidean_users(user, user)
+*sim_mf_cosine_items(item, item)
+*sim_mf_euclidean_items(item, item)
+*avg_user_rating(user)
+*avg_item_rating(item)
+*rated(user, item)
+*sgd_rating(user, item)
+*bpmf_rating(user, item)
+*item_pearson_rating(user, item)
+
+// Tuffy needs something to scope down the target.
+*Scoperating(user, item)
+
+// Target predicate
+rating(user, item)
+
+// Try to scope it down.
+rating(a, b) := Scoperating(a, b) .
+
+// Rules
+
+// Similarities like Pearson, Cosine, and Adjusted Cosine Similarity between items.
+1.0 rated(a,j), rated(a,k), rating(a,j), sim_pearson_items(j,k) => rating(a,k)
+1.0 rated(a,j), rated(a,k), rating(a,j), sim_cosine_items(j,k) => rating(a,k)
+1.0 rated(a,j), rated(a,k), rating(a,j), sim_adjcos_items(j,k) => rating(a,k)
+
+// Similarities like Pearson and Cosine Similarity between users.
+1.0 rated(a,i), rated(b,i), rating(a,i), sim_pearson_users(a,b) => rating(b,i)
+1.0 rated(a,i), rated(b,i), rating(a,i), sim_cosine_users(a,b) => rating(b,i)
+
+// Other low dimension space similarities like Matrix Factorization Cosine and Euclidean Similarity between users.
+1.0 user(a), user(b), item(i), rating(a,i), rated(a,i),rated(b,i), sim_mf_cosine_users(a,b) => rating(b,i)
+1.0 user(a), user(b), item(i), rating(a,i), rated(a,i),rated(b,i), sim_mf_euclidean_users(a,b) => rating(b,i)
+
+// Other low dimension space similarities like Matrix Factorization Cosine and Euclidean Similarity between items.
+1.0 user(a), item(j), item(k), rating(a,j), rated(a,j), rated(a,k), sim_mf_cosine_items(j,k) => rating(a,k)
+1.0 user(a), item(j), item(k), rating(a,j), rated(a,j), rated(a,k), sim_mf_euclidean_items(j,k) => rating(a,k)
+
+// Predictions by different other methods like SGD, item based Pearson methods, and BPMF methods.
+1.0 sgd_rating(a,i) => rating(a,i)
+1.0 rating(a,i) => sgd_rating(a,i)
+1.0 item_pearson_rating(a,i) => rating(a,i)
+1.0 rating(a,i) => item_pearson_rating(a,i)
+1.0 bpmf_rating(a,i) => rating(a,i)
+1.0 rating(a,i) => bpmf_rating(a,i)
+
+// Average prior of user rating and item ratings.
+1.0 user(a), item(i), rated(a,i), avg_user_rating(a) => rating(a,i)
+1.0 user(a), item(i), rated(a,i), rating(a,i) => avg_user_rating(a)
+1.0 user(a), item(i), rated(a,i), avg_item_rating(i) => rating(a,i)
+1.0 user(a), item(i), rated(a,i), rating(a,i) => avg_item_rating(i)
+
+// Social rule of friendship influencing ratings.
+1.0 rated(a,i), rated(b,i), users_are_friends(a,b), rating(a,i) => rating(b,i)
+
+// Content rule by Jaccard similarity.
+1.0 rated(a,j), rated(a,k), rating(a,j), sim_content_items_jaccard(j,k) => rating(a,k)

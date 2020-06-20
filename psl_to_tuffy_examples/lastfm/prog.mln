@@ -1,0 +1,26 @@
+// Closed predicates
+*sim_pearson_items(item, item)
+*sim_pearson_users(user, user)
+*rated(user, item)
+*item_pearson_rating(user, item)
+
+// Tuffy needs something to scope down the target.
+*Scoperating(user, item)
+
+// Target predicate
+rating(user, item)
+
+// Try to scope it down.
+rating(a, b) := Scoperating(a, b) .
+
+// Rules
+
+//Item sims
+1.0: rated(U,I1), rated(U,I2), rating(U,I1), sim_pearson_items(I1,I2) => rating(U,I2) ^2
+
+//User sims
+1.0: rated(U1,I), rated(U2,I), rating(U1,I), sim_pearson_users(U1,U2) => rating(U2,I) ^2
+
+//item based pearson Predictions
+1.0: item_pearson_rating(U,I) => rating(U,I) ^2
+1.0: rating(U,I) => item_pearson_rating(U,I) ^2
